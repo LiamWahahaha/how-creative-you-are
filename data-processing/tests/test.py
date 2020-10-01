@@ -1,5 +1,5 @@
 import unittest
-from .modules.utils import (
+from ..modules.utils import (
     extract_imported_package,
     extract_from_normal_chunk,
     extract_from_chunk_contains_comma,
