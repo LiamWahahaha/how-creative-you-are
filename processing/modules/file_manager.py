@@ -1,7 +1,16 @@
 import sys
 from collections import defaultdict
+import json
 
 import boto3
+
+from .utils import (
+    is_notebook_code_cell,
+    extract_source_code_from_notebook,
+    extract_imported_package_from_next_line,
+    extract_imported_package,
+    Print
+)
 
 S3_RESPONSE_METADATA = 'ResponseMetadata'
 S3_RESPONSE_METADATA_HTTP_STATUS = 'HTTPStatusCode'
@@ -9,6 +18,9 @@ S3_RESPONSE_CONTENTS = 'Contents'
 S3_RESPONSE_CONTENT_KEY = 'Key'
 S3_RESPONSE_NEXT_CONTINUATION_TOKEN = 'NextContinuationToken'
 S3_MAX_KEY = 1000
+
+DEFAULT_BUCKET = 'code-database-s3'
+ROOT_FOLDER = 'real-challenges'
 
 class S3FileManager:
     METADATA = 'metadata'
@@ -27,7 +39,7 @@ class S3FileManager:
             self.CLEANED_FILES: set()
         })
 
-    def construct_lookup_table(self, bucket='code-database-s3', root_folder='real-challenges'):
+    def construct_lookup_table(self, bucket=DEFAULT_BUCKET, root_folder=ROOT_FOLDER):
         response = self.s3_client.list_objects_v2(
             Bucket=bucket, Prefix=root_folder, MaxKeys=S3_MAX_KEY
         )
@@ -90,3 +102,82 @@ class S3FileManager:
 
     # def retrieve_notebooks_by_challenges(bucket, root_path):
     #     response = self.s3_client.list_objects_v2(Bucket=bucket, Prefix=)
+
+    def process_single_file(self,
+                            bucket=DEFAULT_BUCKET,
+                            root_folder=ROOT_FOLDER,
+                            challenge='',
+                            file_name=''):
+        """
+        Upload cleaned python script back to s3 and return sorted import packages
+        """
+        imported_packages = set()
+
+        if not bucket or not challenge or not file_name:
+            return json.dumps({})
+
+        s3_download_path = f'{root_folder}/{challenge}/{self.ORIGINAL_FILES}'
+        s3_upload_path = f'{root_folder}/{challenge}/{self.CLEANED_FILES}'
+        download_file = file_name + self.ORIGINAL_FILE_TYPE
+        upload_file = file_name + self.CLEANED_FILE_TYPE
+        s3_upload_key = f'{s3_upload_path}/{upload_file}'
+        try:
+            self.s3_res.Bucket(bucket).download_file(f'{s3_download_path}/{download_file}',
+                                                     download_file)
+            notebook, imported_packages = self._process_notebook(download_file)
+            self._upload_cleaned_script_to_s3(bucket=bucket,
+                                              upload_file=upload_file,
+                                              file_content=notebook,
+                                              s3_upload_key=s3_upload_key)
+
+
+        except:
+            Print.error('Process single file failed')
+
+        imported_packages = sorted(list(imported_packages))
+        return imported_packages
+
+    def _process_notebook(self, download_file=None):
+        """
+        Returns:
+        str: cleaned script
+        set: imported packages
+        """
+        cleaned_script = list()
+        imported_packages = set()
+        try:
+            local_file = open(download_file, 'r')
+            notebook = json.loads(local_file.read())
+            local_file.close()
+
+            for cell in notebook['cells']:
+                if not is_notebook_code_cell(cell):
+                    continue
+                source_code = extract_source_code_from_notebook(cell)
+                cleaned_script.append(source_code)
+                should_combine_next_line = False
+                for line in source_code.split('\n'):
+                    packages = set()
+                    if should_combine_next_line:
+                        should_combine_next_line, packages = extract_imported_package_from_next_line(line)
+                    else:
+                        should_combine_next_line, packages = extract_imported_package(line)
+                    imported_packages = imported_packages.union(packages)
+        except:
+            Print.error('Process local notebook file failed')
+
+        return ''.join(cleaned_script), imported_packages
+
+    def _upload_cleaned_script_to_s3(self,
+                                     bucket=DEFAULT_BUCKET,
+                                     upload_file='',
+                                     file_content='',
+                                     s3_upload_key=''):
+        try:
+            file_writer = open(upload_file, 'w')
+            file_writer.write(file_content)
+            file_writer.close()
+
+            self.s3_res.Object(bucket, s3_upload_key).upload_file(upload_file)
+        except:
+            Print.error('Upload cleaned script to S3 failed')

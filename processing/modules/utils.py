@@ -6,6 +6,7 @@ COMMENT = '#'
 CONTINUATION_CHARACTER = '\\'
 DOT = '.'
 
+
 def extract_imported_package(line):
     """
     handled case:
@@ -59,10 +60,23 @@ def extract_imported_package(line):
     return should_combine_next_line, imported_packages
 
 def extract_imported_package_from_next_line(line):
+    """
+    This is a dummy function
+    """
     has_next_line = False
-    pass
+    imported_packages = set()
+    return has_next_line, imported_packages
 
 def extract_from_chunk(chunk):
+    """Extract packages from chunk
+
+    Parameters:
+    chunk (str): a chunk is a string without space
+
+    Returns:
+    bool: should_combine_next_line
+    set: packages
+    """
     packages = set()
     should_combine_next_line = False
 
@@ -80,16 +94,14 @@ def extract_from_chunk(chunk):
     return should_combine_next_line, packages
 
 def extract_from_normal_chunk(chunk):
-    """
-    deal with the following cases:
+    """Deal with the following cases:
     'x0'
     'x0.y0'
     """
     return chunk if DOT not in chunk else chunk.split('.')[0]
 
 def extract_from_chunk_contains_comma(chunk):
-    """
-    deal with the following cases:
+    """Deal with the following cases:
     'x0,x1.y0,x2'
     'x0,x1,'
     'x0,x1,x2,...,xn,\\'
@@ -103,3 +115,32 @@ def extract_from_chunk_contains_comma(chunk):
         packages.add(package)
 
     return packages
+
+def is_notebook_code_cell(notebook_cell):
+    try:
+        return notebook_cell['cell_type'] == 'code'
+    except:
+        return False
+
+def extract_source_code_from_notebook(notebook_cell):
+    """Return the source code block"""
+    return notebook_cell['source']
+
+class Print:
+    """Print message with color"""
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+    @classmethod
+    def info(cls, msg):
+        """Print out green msg"""
+        print(f'{cls.OKGREEN}{msg}{cls.ENDC}')
+
+    @classmethod
+    def error(cls, msg):
+        """"Print out red msg"""
+        print(f'{cls.FAIL}{msg}{cls.ENDC}')
