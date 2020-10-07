@@ -31,17 +31,19 @@ class S3FileManager:
     CLEANED_FILE_TYPE = '.py'
     ITERATION_UPPER_BOUND = 4e5/S3_MAX_KEY
 
-    def __init__(self):
+    def __init__(self, bucket=DEFAULT_BUCKET, root_folder=ROOT_FOLDER):
         self.s3_res = boto3.resource('s3')
         self.s3_client = boto3.client('s3')
+        self.bucket = bucket
+        self.root_folder = root_folder
         self.lookup_table = defaultdict(lambda: {
             self.METADATA: str,
             self.CLEANED_FILES: set()
         })
 
-    def construct_lookup_table(self, bucket=DEFAULT_BUCKET, root_folder=ROOT_FOLDER):
+    def construct_lookup_table(self):
         response = self.s3_client.list_objects_v2(
-            Bucket=bucket, Prefix=root_folder, MaxKeys=S3_MAX_KEY
+            Bucket=self.bucket, Prefix=self.root_folder, MaxKeys=S3_MAX_KEY
         )
 
         try:
@@ -55,8 +57,8 @@ class S3FileManager:
                 if S3_RESPONSE_NEXT_CONTINUATION_TOKEN in response:
                     iteration += 1
                     response = self.s3_client.list_objects_v2(
-                        Bucket=bucket,
-                        Prefix=root_folder,
+                        Bucket=self.bucket,
+                        Prefix=self.root_folder,
                         MaxKeys=S3_MAX_KEY,
                         ContinuationToken=response[S3_RESPONSE_NEXT_CONTINUATION_TOKEN]
                     )
@@ -103,34 +105,27 @@ class S3FileManager:
     # def retrieve_notebooks_by_challenges(bucket, root_path):
     #     response = self.s3_client.list_objects_v2(Bucket=bucket, Prefix=)
 
-    def process_single_file(self,
-                            bucket=DEFAULT_BUCKET,
-                            root_folder=ROOT_FOLDER,
-                            challenge='',
-                            file_name=''):
+    def process_single_file(self, challenge='', file_name=''):
         """
-        Upload cleaned python script back to s3 and return sorted import packages
+        upload cleaned python script back to s3 and return sorted import packages
         """
         imported_packages = set()
 
-        if not bucket or not challenge or not file_name:
+        if not challenge or not file_name:
             return json.dumps({})
 
-        s3_download_path = f'{root_folder}/{challenge}/{self.ORIGINAL_FILES}'
-        s3_upload_path = f'{root_folder}/{challenge}/{self.CLEANED_FILES}'
+        s3_download_path = f'{self.root_folder}/{challenge}/{self.ORIGINAL_FILES}'
+        s3_upload_path = f'{self.root_folder}/{challenge}/{self.CLEANED_FILES}'
         download_file = file_name + self.ORIGINAL_FILE_TYPE
         upload_file = file_name + self.CLEANED_FILE_TYPE
         s3_upload_key = f'{s3_upload_path}/{upload_file}'
         try:
-            self.s3_res.Bucket(bucket).download_file(f'{s3_download_path}/{download_file}',
+            self.s3_res.Bucket(self.bucket).download_file(f'{s3_download_path}/{download_file}',
                                                      download_file)
             notebook, imported_packages = self._process_notebook(download_file)
-            self._upload_cleaned_script_to_s3(bucket=bucket,
-                                              upload_file=upload_file,
+            self._upload_cleaned_script_to_s3(upload_file=upload_file,
                                               file_content=notebook,
                                               s3_upload_key=s3_upload_key)
-
-
         except:
             Print.error('Process single file failed')
 
@@ -155,13 +150,13 @@ class S3FileManager:
                     continue
                 source_code = extract_source_code_from_notebook(cell)
                 cleaned_script.append(source_code)
-                should_combine_next_line = False
+                combine_next_line = False
                 for line in source_code.split('\n'):
                     packages = set()
-                    if should_combine_next_line:
-                        should_combine_next_line, packages = extract_imported_package_from_next_line(line)
+                    if combine_next_line:
+                        combine_next_line, packages = extract_imported_package_from_next_line(line)
                     else:
-                        should_combine_next_line, packages = extract_imported_package(line)
+                        combine_next_line, packages = extract_imported_package(line)
                     imported_packages = imported_packages.union(packages)
         except:
             Print.error('Process local notebook file failed')
@@ -169,7 +164,6 @@ class S3FileManager:
         return ''.join(cleaned_script), imported_packages
 
     def _upload_cleaned_script_to_s3(self,
-                                     bucket=DEFAULT_BUCKET,
                                      upload_file='',
                                      file_content='',
                                      s3_upload_key=''):
@@ -178,6 +172,21 @@ class S3FileManager:
             file_writer.write(file_content)
             file_writer.close()
 
-            self.s3_res.Object(bucket, s3_upload_key).upload_file(upload_file)
+            self.s3_res.Object(self.bucket, s3_upload_key).upload_file(upload_file)
         except:
             Print.error('Upload cleaned script to S3 failed')
+
+    def extract_file_name(self, kaggle_ref):
+        """
+        Parameter:
+        kaggle_ref(str): a kaggle reference would in this format - [user_name]/[notebook_name]
+
+        Return:
+        str: notebook_name
+        """
+        try:
+            kaggle_ref = kaggle_ref.split('/')
+            return kaggle_ref[1]
+        except IndexError:
+            Print.error('Extract file name failed')
+            return ''
