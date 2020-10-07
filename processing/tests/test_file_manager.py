@@ -13,14 +13,5 @@ class S3FileManagerTest(unittest.TestCase):
         self.assertEqual(file_manager.lookup_table[competition]['metadata'], meta_file)
         self.assertEqual(file_manager.lookup_table[competition]['cleaned'], {cleaned_file})
 
-    def test_extract_kernel_name(self):
-        file_manager = S3FileManager()
-        self.assertEqual(
-            file_manager.extract_file_name('marcelolafeta/hash-code-drones-google-imt-vamo-pra-cima'),
-            'hash-code-drones-google-imt-vamo-pra-cima'
-        )
-        self.assertEqual(file_manager.extract_file_name('marcelolafeta/'), '')
-        self.assertEqual(file_manager.extract_file_name('marcelolafeta'), '')
-
 if __name__ == '__main__':
     unittest.main()

@@ -175,18 +175,3 @@ class S3FileManager:
             self.s3_res.Object(self.bucket, s3_upload_key).upload_file(upload_file)
         except:
             Print.error('Upload cleaned script to S3 failed')
-
-    def extract_file_name(self, kaggle_ref):
-        """
-        Parameter:
-        kaggle_ref(str): a kaggle reference would in this format - [user_name]/[notebook_name]
-
-        Return:
-        str: notebook_name
-        """
-        try:
-            kaggle_ref = kaggle_ref.split('/')
-            return kaggle_ref[1]
-        except IndexError:
-            Print.error('Extract file name failed')
-            return ''

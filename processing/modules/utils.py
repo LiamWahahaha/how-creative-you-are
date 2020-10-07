@@ -126,6 +126,21 @@ def extract_source_code_from_notebook(notebook_cell):
     """Return the source code block"""
     return notebook_cell['source']
 
+def extract_kernel_name_from_ref(kaggle_ref):
+    """
+    Parameter:
+    kaggle_ref(str): a kaggle reference would in this format - [user_name]/[notebook_name]
+
+    Return:
+    str: notebook_name
+    """
+    try:
+        kaggle_ref = kaggle_ref.split('/')
+        return kaggle_ref[1]
+    except IndexError:
+        Print.error('Extract file name failed')
+        return ''
+
 class Print:
     """Print message with color"""
     OKGREEN = '\033[92m'

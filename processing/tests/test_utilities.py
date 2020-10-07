@@ -3,7 +3,8 @@ from ..modules.utils import (
     extract_imported_package,
     extract_from_normal_chunk,
     extract_from_chunk_contains_comma,
-    extract_from_chunk
+    extract_from_chunk,
+    extract_kernel_name_from_ref
 )
 
 class UtilitiesTest(unittest.TestCase):
@@ -36,6 +37,15 @@ class UtilitiesTest(unittest.TestCase):
 
     def test_extract_imported_functions(self):
         pass
+
+    def test_extract_kernel_name_from_ref(self):
+        self.assertEqual(
+            extract_kernel_name_from_ref('marcelolafeta/hash-code-drones-google-imt-vamo-pra-cima'),
+            'hash-code-drones-google-imt-vamo-pra-cima'
+        )
+        self.assertEqual(extract_kernel_name_from_ref('marcelolafeta/'), '')
+        self.assertEqual(extract_kernel_name_from_ref('marcelolafeta'), '')
+
 
 if __name__ == '__main__':
     unittest.main()
