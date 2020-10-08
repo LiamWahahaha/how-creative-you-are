@@ -149,7 +149,7 @@ class S3FileManager:
         """
         upload cleaned python script back to s3 and return sorted import packages
         """
-        s3_res = boto3.resource()
+        s3_res = boto3.resource('s3')
         imported_packages = set()
         if not competition or not kernel:
             return json.dumps({})
@@ -205,7 +205,7 @@ class S3FileManager:
         except:
             Print.error('Process local notebook file failed')
 
-        return ''.join(cleaned_script), imported_packages
+        return '\n'.join(cleaned_script), imported_packages
 
     def _upload_cleaned_script_to_s3(self,
                                      upload_file='',
