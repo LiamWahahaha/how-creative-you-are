@@ -4,7 +4,7 @@ import json
 
 import boto3
 
-from .utils import (
+from utils import (
     is_notebook_code_cell,
     extract_source_code_from_notebook,
     extract_imported_package_from_next_line,
@@ -12,7 +12,7 @@ from .utils import (
     Print
 )
 
-from .constant import (
+from constant import (
     S3_RESPONSE_METADATA,
     S3_RESPONSE_METADATA_HTTP_STATUS,
     S3_RESPONSE_CONTENTS,
@@ -121,8 +121,8 @@ class S3FileManager:
 
         s3_download_path = f'{self.root_folder}/{competition}/{self.ORIGINAL_FILES}'
         s3_upload_path = f'{self.root_folder}/{competition}/{self.CLEANED_FILES}'
-        download_file = kernel + self.ORIGINAL_FILE_TYPE
-        upload_file = kernel + self.CLEANED_FILE_TYPE
+        download_file = f'{kernel}{self.ORIGINAL_FILE_TYPE}'
+        upload_file = f'{kernel}{self.CLEANED_FILE_TYPE}'
         s3_upload_key = f'{s3_upload_path}/{upload_file}'
 
         try:
