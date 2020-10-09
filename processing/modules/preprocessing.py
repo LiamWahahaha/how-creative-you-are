@@ -7,7 +7,7 @@ def main():
     Print.info('Start preprocessing')
     parallel_processor = SparkProcessor()
     spark = parallel_processor.spark
-    
+
     Print.info('Load metadata file from s3')
     metadata_s3_path = 's3a://code-database-s3/real-challenges-meta'
     metadata_df = spark.read.option('header', 'true').csv(metadata_s3_path)

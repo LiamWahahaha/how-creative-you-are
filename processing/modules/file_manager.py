@@ -204,6 +204,8 @@ class S3FileManager:
                     imported_packages = imported_packages.union(packages)
         except:
             Print.error('Process local notebook file failed')
+        finally:
+            cleaned_script.append('\n')
 
         return '\n'.join(cleaned_script), imported_packages
 
