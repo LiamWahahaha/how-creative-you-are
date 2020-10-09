@@ -7,3 +7,4 @@ S3_MAX_KEY = 1000
 
 DEFAULT_BUCKET = 'code-database-s3'
 ROOT_FOLDER = 'real-challenges'
+DEFAULT_PARQUET_PATH = 's3a://code-database-s3/real-challenge-final-dataset/final.parquet'
