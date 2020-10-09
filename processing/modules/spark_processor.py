@@ -4,7 +4,7 @@ from pyspark.sql.types import (
     StructField,
     StringType,
     LongType,
-    DoubleType
+    FloatType
 )
 from pyspark.sql.functions import udf
 
@@ -49,15 +49,16 @@ class SparkProcessor:
     def attach_similarity_score_to_df(self, metadata_df):
         calculator = SimilarityCalculator()
         similarity_rdd = metadata_df.rdd \
-                                    .flatMaps(calculator.calculate_code_similarity_using_record)
+                                    .flatMap(calculator.calculate_code_similarity_using_record)
         similarity_schema = StructType([StructField('competitor', StringType(), False),
                                         StructField('competition', StringType(), False),
                                         StructField('kernel', StringType(), True),
                                         StructField('competitor2', StringType(), False),
-                                        StructField('kernel', StringType(), False),
+                                        StructField('kernel2', StringType(), False),
                                         StructField('importedPackages', StringType(), True),
-                                        StructField('similarityScore', DoubleType(), False)])
+                                        StructField('similarityScore', FloatType(), True)])
         similarity_df = similarity_rdd.map(lambda row: list(row)) \
                                       .toDF(similarity_schema)
 
         return similarity_df
+

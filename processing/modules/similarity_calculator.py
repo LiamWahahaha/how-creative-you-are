@@ -2,10 +2,10 @@ import boto3
 import pycode_similar
 from pyspark.sql.functions import col
 
+from utils import Print
 from constant import (
     DEFAULT_BUCKET,
-    ROOT_FOLDER,
-    Print
+    ROOT_FOLDER
 )
 
 class SimilarityCalculator:
@@ -16,26 +16,24 @@ class SimilarityCalculator:
         self.bucket = bucket
         self.root_folder = root_folder
 
-    @classmethod
-    def generate_pairwise_comparison_df_wo_filter(cls, kernel_df=None):
+    def generate_pairwise_comparison_df_wo_filter(self, kernel_df=None):
         """
         Return a Cartesian product dataframe (records from N to N^2)
         """
         return cls._generate_pairwise_comparison_df(kernel_df)
 
-    @classmethod
-    def generate_pairwise_comparison_df_w_filter(cls, kernel_df=None):
+    def generate_pairwise_comparison_df_w_filter(self, kernel_df=None):
         """
         Return filtered Cartesian product dataframe (records from N to less than N^2)
         """
-        original_df = cls._generate_pairwise_comparison_df(kernel_df)
+        original_df = self._generate_pairwise_comparison_df(kernel_df)
         final_df = original_df.where((col('competitor') != col('competitor2')) &
                                      (col('competition') == col('competition2')) &
                                      (col('lastRunTime') > col('lastRunTime2')) &
                                      (col('packageHash') != col('packageHash2')))
         return final_df
 
-    def _generate_pairwise_comparison_df(self, kernel_df=None):
+    def _generate_pairwise_comparison_df(self, kernel_df):
         """
         helper function
         """
@@ -47,7 +45,8 @@ class SimilarityCalculator:
             kernel_df['importedPackages'].alias('importedPackages2'),
             kernel_df['packageHash'].alias('packageHash2')
         )
-        return kernel_df.crossJoin(dummy_kernel_df)
+        pairwise_comparison_df = kernel_df.crossJoin(dummy_kernel_df)
+        return pairwise_comparison_df
 
     def calculate_code_similarity_using_record(self, record):
         """
@@ -59,7 +58,7 @@ class SimilarityCalculator:
         kernel1 = record.kernel
         competitor2 = record.competitor2
         kernel2 = record.kernel2
-        similarity_score = -1
+        similarity_score = -1.0
 
         s3_download_path = f'{self.root_folder}/{competition}/{self.SCRIPT_FOLDER}'
         download_file_1 = f'{kernel1}{self.SCRIPT_FILE_TYPE}'
@@ -71,24 +70,28 @@ class SimilarityCalculator:
                   .download_file(f'{s3_download_path}/{download_file_2}', download_file_2)
             similarity_score = self._calculate_similarity_score(download_file_1, download_file_2)
         except:
-            Print.error('Process single record failed')
+            pass
+            # Print.error('Process single record failed')
 
         return [(competitor1,
                  competition,
                  kernel1,
                  competitor2,
                  kernel2,
-                 record.importedPackes,
+                 record.importedPackages,
                  similarity_score)]
 
     def _calculate_similarity_score(self, file1, file2):
-        similarity_score = -1
+        similarity_score = -1.0
         try:
             local_kernel1 = open(file1, 'r')
             local_kernel2 = open(file2, 'r')
             score = pycode_similar.detect([local_kernel1.read(), local_kernel2.read()])
-            similarity_score = score[0][0]
+            summarize = pycode_similar.summarize(score[0][1])
+            similarity_score = summarize[0]
+            print(summarize)
         except:
-            Print.error('Calculate similarity score failed')
+            pass
+            # Print.error('Calculate similarity score failed')
 
         return similarity_score
