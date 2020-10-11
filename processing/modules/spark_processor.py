@@ -8,6 +8,7 @@ from pyspark.sql.types import (
 )
 from pyspark.sql.functions import udf
 
+from database import PostgresConnector
 from file_manager import S3FileManager
 from similarity_calculator import SimilarityCalculator
 from utils import Print
@@ -61,4 +62,8 @@ class SparkProcessor:
                                       .toDF(similarity_schema)
 
         return similarity_df
+
+    def write_final_results_to_database(self, final_df):
+        postgres_connector = PostgresConnector()
+        postgres_connector.write(final_df, 'similarity_scores', 'overwrite')
 

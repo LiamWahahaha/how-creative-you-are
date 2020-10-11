@@ -31,6 +31,7 @@ def main():
     Print.info(f'Original required comparisons: {records**2}')
     Print.info(f'Total processing time: {toc - tic:0.4f} seconds')
     Print.info('===============================================')
+    parallel_processor.write_final_results_to_database(similarity_score_df)
     similarity_score_df.write.parquet('s3a://code-database-s3/real-challenge-final-dataset/similarity_score.parquet', mode='overwrite')
 
 if __name__ == '__main__':

@@ -63,12 +63,16 @@ class SimilarityCalculator:
         s3_download_path = f'{self.root_folder}/{competition}/{self.SCRIPT_FOLDER}'
         download_file_1 = f'{kernel1}{self.SCRIPT_FILE_TYPE}'
         download_file_2 = f'{kernel2}{self.SCRIPT_FILE_TYPE}'
+
         try:
-            s3_res.Bucket(self.bucket) \
-                  .download_file(f'{s3_download_path}/{download_file_1}', download_file_1)
-            s3_res.Bucket(self.bucket) \
-                  .download_file(f'{s3_download_path}/{download_file_2}', download_file_2)
-            similarity_score = self._calculate_similarity_score(download_file_1, download_file_2)
+            if kernel1 == kernel2:
+                similarity_score = 1.0
+            else:
+                s3_res.Bucket(self.bucket) \
+                      .download_file(f'{s3_download_path}/{download_file_1}', download_file_1)
+                s3_res.Bucket(self.bucket) \
+                      .download_file(f'{s3_download_path}/{download_file_2}', download_file_2)
+                similarity_score = self._calculate_similarity_score(download_file_1, download_file_2)
         except:
             pass
             # Print.error('Process single record failed')
