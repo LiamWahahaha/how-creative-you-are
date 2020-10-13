@@ -24,10 +24,12 @@ from app.resources.api_resources import (
     SimilarityScores
 )
 
-api.add_resource(CompetitionMeta, '/competition-meta')
-api.add_resource(SimilarityScores, '/similarity-scores')
+api.add_resource(CompetitionMeta, '/api/competition-meta/')
+api.add_resource(SimilarityScores, '/api/similarity-scores/')
 
-@app.route('/')
+@app.route('/api')
 def helloWorld():
     return "Hello World!"
 
+if __name__ == '__main__':
+    app.run(host='0.0.0.0')
