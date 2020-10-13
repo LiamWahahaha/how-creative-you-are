@@ -18,16 +18,16 @@
             </h2>
           </v-card-subtitle>
           <v-card-title>
-            Search by CompetitionID
+            Select One Available Competition
           </v-card-title>
           <v-card-text>
-            <v-text-field
+            <v-select
               outlined
-              v-model="competition"
-              append-icon="mdi-magnify"
-              type="text"
-              clearable
-              @click:append="search"
+              v-model="selected_competition"
+              :items="available_competition"
+              item-text="text"
+              item-value="value"
+              label="Available Competition"
             />
           </v-card-text>
         </v-card>
@@ -105,9 +105,37 @@ export default {
       return value.toFixed(3)
     }
   },
+  watch: {
+    selected_competition () {
+      this.retrieveCompetitionMeta()
+      this.retrieveSimilarityScores()
+    }
+  },
   data () {
     return {
-      competition: '',
+      available_competition: [
+        {
+          text: "Conway's Reverse Game of Life 2020",
+          value: 'conways-reverse-game-of-life-2020'
+        },
+        {
+          text: 'Hash Code Archive: Drone Delivery',
+          value: 'hashcode-drone-delivery'
+        },
+        {
+          text: 'Mechanisms of Action (MoA) Prediction',
+          value: 'lish-moa'
+        },
+        {
+          text: 'Lyft Motion Prediction for Autonomous Vehicles',
+          value: 'lyft-motion-prediction-autonomous-vehicles'
+        },
+        {
+          text: 'RSNA STR Pulmonary Embolism Detection',
+          value: 'rsna-str-pulmonary-embolism-detection'
+        }
+      ],
+      selected_competition: null,
       competitors: 'N/A',
       teams: 'N/A',
       categories: 'N/A',
@@ -148,9 +176,9 @@ export default {
     },
     retrieveCompetitionMeta () {
       const vm = this
-      axios.get('http://52.207.89.168:5000/competition-meta', {
+      axios.get('http://www.similarity.work/api/competition-meta', {
         params: {
-          competition_id: this.competition
+          competition_id: this.selected_competition
         }
       })
       .then(response => {
@@ -170,9 +198,9 @@ export default {
     },
     retrieveSimilarityScores () {
       const vm = this
-      axios.get('http://52.207.89.168:5000/similarity-scores', {
+      axios.get('http://www.similarity.work/api/similarity-scores', {
         params: {
-          competition_id: this.competition,
+          competition_id: this.selected_competition,
           top_n: 50
         }
       })
