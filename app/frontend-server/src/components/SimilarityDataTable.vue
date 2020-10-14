@@ -24,7 +24,7 @@
             <v-select
               outlined
               v-model="selected_competition"
-              :items="available_competition"
+              :items="available_competitions"
               item-text="text"
               item-value="value"
               label="Available Competition"
@@ -113,28 +113,7 @@ export default {
   },
   data () {
     return {
-      available_competition: [
-        {
-          text: "Conway's Reverse Game of Life 2020",
-          value: 'conways-reverse-game-of-life-2020'
-        },
-        {
-          text: 'Hash Code Archive: Drone Delivery',
-          value: 'hashcode-drone-delivery'
-        },
-        {
-          text: 'Mechanisms of Action (MoA) Prediction',
-          value: 'lish-moa'
-        },
-        {
-          text: 'Lyft Motion Prediction for Autonomous Vehicles',
-          value: 'lyft-motion-prediction-autonomous-vehicles'
-        },
-        {
-          text: 'RSNA STR Pulmonary Embolism Detection',
-          value: 'rsna-str-pulmonary-embolism-detection'
-        }
-      ],
+      available_competitions: [],
       selected_competition: null,
       competitors: 'N/A',
       teams: 'N/A',
@@ -167,12 +146,26 @@ export default {
       records: []
     }
   },
+  mounted () {
+    this.retrieveAvailableCompetitions()
+  },
   methods: {
     getColor (similarity_score) {
       if (similarity_score > 0.9) return '#FF0000'
       else if (similarity_score > 0.7) return '#FFB200'
       else if (similarity_score > 0.4) return '#128FD9'
       else return '#00A100'
+    },
+    retrieveAvailableCompetitions () {
+      const vm = this
+      axios.get('http://www.similarity.work/api/competition')
+      .then(response => {
+        vm.available_competitions = response.data.competitions
+      })
+      .catch(error => {
+        console.log(error)
+        vm.available_competitions = []
+      })
     },
     retrieveCompetitionMeta () {
       const vm = this
@@ -194,7 +187,6 @@ export default {
         vm.competitors = 'N/A'
         vm.entries = 'N/A'
       })
-
     },
     retrieveSimilarityScores () {
       const vm = this
