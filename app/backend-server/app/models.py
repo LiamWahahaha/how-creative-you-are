@@ -15,6 +15,10 @@ class CompetitionMeta(db.Model):
     def find_by_competition_id(cls, id):
         return cls.query.filter_by(competition=id).first()
 
+    @classmethod
+    def query_all(cls):
+        return cls.query.distinct(cls.competition).all()
+
 class SimilarityScores(db.Model):
     competitor = db.Column(db.VARCHAR(40), primary_key=True)
     competition = db.Column(db.VARCHAR(255), primary_key=True)
@@ -36,4 +40,9 @@ class SimilarityScores(db.Model):
     @classmethod
     def find_by_competition_id(cls, id, top_n):
         return cls.query.filter_by(competition=id).order_by(SimilarityScores.similarityscore.desc()).limit(top_n).all()
+
+    @classmethod
+    def find_processed_competition(cls):
+        competition_ids = list(map(lambda obj: obj.competition, cls.query.distinct(cls.competition).all()))
+        return CompetitionMeta().query.filter(CompetitionMeta.competition.in_(competition_ids)).order_by(CompetitionMeta.competition.asc()).all()
 

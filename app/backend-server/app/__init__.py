@@ -15,15 +15,16 @@ app.config['DEBUG'] = True
 app.secret_key = os.urandom(24)
 api = Api(app)
 cors = CORS(app, resources={r'/*': {'origins"': '*'}})
-    #'http://127.0.0.1:3000'}})
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 from app.resources.api_resources import (
+    Competition,
     CompetitionMeta,
     SimilarityScores
 )
 
+api.add_resource(Competition, '/api/competition/')
 api.add_resource(CompetitionMeta, '/api/competition-meta/')
 api.add_resource(SimilarityScores, '/api/similarity-scores/')
 
