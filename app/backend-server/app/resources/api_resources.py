@@ -6,6 +6,11 @@ from app.models import (
 )
 
 
+class Competition(Resource):
+    def get(self):
+        competition = SimilarityScoresModel.find_processed_competition()
+        return {'competitions': list(map(lambda obj: {'text': obj.competition_name, 'value': obj.competition}, competition))}, status.HTTP_200_OK
+
 class CompetitionMeta(Resource):
     def get(self):
         parser = reqparse.RequestParser()
@@ -28,8 +33,6 @@ class SimilarityScores(Resource):
         data_payload = parser.parse_args()
         competition = data_payload['competition_id']
         top_n = data_payload['top_n'] if data_payload['top_n'] else 50
-
         similarity_scores = SimilarityScoresModel.find_by_competition_id(data_payload['competition_id'], top_n)
-        print(similarity_scores)
         return {'similarity_scores': list(map(lambda obj: obj.json(), similarity_scores))}, status.HTTP_200_OK
 
