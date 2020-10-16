@@ -2,7 +2,6 @@ import boto3
 import pycode_similar
 from pyspark.sql.functions import col
 
-from utils import Print
 from constant import (
     DEFAULT_BUCKET,
     ROOT_FOLDER
@@ -20,9 +19,9 @@ class SimilarityCalculator:
         """
         Return a Cartesian product dataframe (records from N to N^2)
         """
-        return cls._generate_pairwise_comparison_df(kernel_df)
+        return self._generate_pairwise_comparison_df(kernel_df)
 
-    def generate_pairwise_comparison_df_w_filter(self, kernel_df=None):
+    def generate_pairwise_comparison_df_w_filter(self, kernel_df=None, competition=None):
         """
         Return filtered Cartesian product dataframe (records from N to less than N^2)
         """
@@ -31,6 +30,9 @@ class SimilarityCalculator:
                                      (col('competition') == col('competition2')) &
                                      (col('lastRunTime') > col('lastRunTime2')) &
                                      (col('packageHash') != col('packageHash2')))
+        if competition:
+            final_df = final_df.where(col('competition') == competition)
+
         return final_df
 
     def _generate_pairwise_comparison_df(self, kernel_df):
@@ -51,6 +53,8 @@ class SimilarityCalculator:
     def calculate_code_similarity_using_record(self, record):
         """
         A flatMap function
+        competitor1 is candidate
+        competitor2 is reference
         """
         s3_res = boto3.resource('s3')
         competition = record.competition
@@ -61,14 +65,19 @@ class SimilarityCalculator:
         similarity_score = -1.0
 
         s3_download_path = f'{self.root_folder}/{competition}/{self.SCRIPT_FOLDER}'
-        download_file_1 = f'{kernel1}{self.SCRIPT_FILE_TYPE}'
-        download_file_2 = f'{kernel2}{self.SCRIPT_FILE_TYPE}'
+        candidate_file = f'{kernel1}{self.SCRIPT_FILE_TYPE}'
+        referenced_file = f'{kernel2}{self.SCRIPT_FILE_TYPE}'
+
         try:
-            s3_res.Bucket(self.bucket) \
-                  .download_file(f'{s3_download_path}/{download_file_1}', download_file_1)
-            s3_res.Bucket(self.bucket) \
-                  .download_file(f'{s3_download_path}/{download_file_2}', download_file_2)
-            similarity_score = self._calculate_similarity_score(download_file_1, download_file_2)
+            if kernel1 == kernel2:
+                similarity_score = 1.0
+            else:
+                s3_res.Bucket(self.bucket) \
+                      .download_file(f'{s3_download_path}/{referenced_file}', referenced_file)
+                s3_res.Bucket(self.bucket) \
+                      .download_file(f'{s3_download_path}/{candidate_file}', candidate_file)
+                similarity_score = self._calculate_similarity_score(referenced_file,
+                                                                    candidate_file)
         except:
             pass
             # Print.error('Process single record failed')
@@ -81,17 +90,18 @@ class SimilarityCalculator:
                  record.importedPackages,
                  similarity_score)]
 
-    def _calculate_similarity_score(self, file1, file2):
+    def _calculate_similarity_score(self, referenced_code_str, candidate_code_str):
+        """
+        pycode_similar.detect([referenced_code_str, candidate_code_str])
+        """
         similarity_score = -1.0
         try:
-            local_kernel1 = open(file1, 'r')
-            local_kernel2 = open(file2, 'r')
-            score = pycode_similar.detect([local_kernel1.read(), local_kernel2.read()])
+            referenced = open(referenced_code_str, 'r')
+            candidate = open(candidate_code_str, 'r')
+            score = pycode_similar.detect([referenced.read(), candidate.read()])
             summarize = pycode_similar.summarize(score[0][1])
             similarity_score = summarize[0]
-            print(summarize)
         except:
             pass
-            # Print.error('Calculate similarity score failed')
 
         return similarity_score
