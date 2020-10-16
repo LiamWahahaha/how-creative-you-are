@@ -1,6 +1,6 @@
 import time
-from spark_processor import SparkProcessor
-from utils import Print
+from processing.modules.spark_processor import SparkProcessor
+from processing.modules.utils import Print
 
 def main():
     tic = time.perf_counter()
@@ -21,12 +21,15 @@ def main():
 
 
     Print.info('Upload metadata file to s3 in parquet format')
-    packages_hash_df.write.parquet('s3a://code-database-s3/real-challenge-final-dataset/final.parquet', mode='overwrite')
+    packages_hash_df.write.parquet(
+        's3a://code-database-s3/real-challenge-final-dataset/final.parquet',
+        mode='overwrite'
+    )
     toc = time.perf_counter()
-    Print.info(f'===============================================')
-    Print.info(f'Processed {packages_hash_df.count()} records')
+    Print.info('===============================================')
+    Print.info('Processed {packages_hash_df.count()} records')
     Print.info(f'Total processing time: {toc - tic:0.4f} seconds')
-    Print.info(f'===============================================')
+    Print.info('===============================================')
 
 if __name__ == '__main__':
     main()

@@ -8,10 +8,10 @@ from pyspark.sql.types import (
 )
 from pyspark.sql.functions import udf
 
-from database import PostgresConnector
-from file_manager import S3FileManager
-from similarity_calculator import SimilarityCalculator
-from utils import Print
+from processing.modules.database_connector import PostgresConnector
+from processing.modules.file_manager import S3FileManager
+from processing.modules.similarity_calculator import SimilarityCalculator
+from processing.modules.utils import Print
 
 
 class SparkProcessor:
@@ -37,13 +37,13 @@ class SparkProcessor:
             StructField('kernel', StringType(), True),
             StructField('importedPackages', StringType(), True)
         ])
-        imported_packages_df = imported_packages_rdd.map(lambda row: list(row)) \
+        imported_packages_df = imported_packages_rdd.map(list) \
                                                     .toDF(imported_packages_schema)
 
         return imported_packages_df
 
     def add_package_hash_to_df(self, imported_packages_df):
-        hash_udf = udf(lambda imported_packages: hash(imported_packages), LongType())
+        hash_udf = udf(hash, LongType())
         return imported_packages_df \
                 .withColumn('packageHash', hash_udf(imported_packages_df.importedPackages))
 
@@ -58,12 +58,12 @@ class SparkProcessor:
                                         StructField('kernel2', StringType(), False),
                                         StructField('importedPackages', StringType(), True),
                                         StructField('similarityScore', FloatType(), True)])
-        similarity_df = similarity_rdd.map(lambda row: list(row)) \
+        similarity_df = similarity_rdd.map(list) \
                                       .toDF(similarity_schema)
 
         return similarity_df
 
     def write_final_results_to_database(self, final_df):
         postgres_connector = PostgresConnector()
-        postgres_connector.write(final_df, 'similarity_scores', 'overwrite')
+        postgres_connector.write(final_df, 'similarity_scores', 'append')
 
