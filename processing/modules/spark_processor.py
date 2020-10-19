@@ -8,10 +8,10 @@ from pyspark.sql.types import (
 )
 from pyspark.sql.functions import udf
 
-from processing.modules.database_connector import PostgresConnector
-from processing.modules.file_manager import S3FileManager
-from processing.modules.similarity_calculator import SimilarityCalculator
-from processing.modules.utils import Print
+from modules.database_connector import PostgresConnector
+from modules.file_manager import S3FileManager
+from modules.similarity_calculator import SimilarityCalculator
+from modules.utils import Print
 
 
 class SparkProcessor:
@@ -20,9 +20,9 @@ class SparkProcessor:
                         .builder \
                         .appName('KernelCatcher') \
                         .getOrCreate()
-        self.spark.sparkContext.addPyFile('utils.py')
-        self.spark.sparkContext.addPyFile('file_manager.py')
-        self.spark.sparkContext.addPyFile('similarity_calculator.py')
+        self.spark.sparkContext.addPyFile('modules/utils.py')
+        self.spark.sparkContext.addPyFile('modules/file_manager.py')
+        self.spark.sparkContext.addPyFile('modules/similarity_calculator.py')
         Print.info('Add py file success')
         self.spark.sparkContext.setLogLevel('ERROR')
 
