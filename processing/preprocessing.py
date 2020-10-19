@@ -1,6 +1,6 @@
 import time
-from processing.modules.spark_processor import SparkProcessor
-from processing.modules.utils import Print
+from modules.spark_processor import SparkProcessor
+from modules.utils import Print
 
 def main():
     tic = time.perf_counter()
@@ -33,3 +33,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

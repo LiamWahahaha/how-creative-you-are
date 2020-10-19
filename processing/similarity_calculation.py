@@ -1,9 +1,9 @@
 import time
-from spark_processor import SparkProcessor
 
-from utils import Print
-from constant import DEFAULT_PARQUET_PATH
-from similarity_calculator import SimilarityCalculator
+from modules.spark_processor import SparkProcessor
+from modules.utils import Print
+from modules.constant import DEFAULT_PARQUET_PATH
+from modules.similarity_calculator import SimilarityCalculator
 
 def main():
     tic = time.perf_counter()
@@ -16,7 +16,7 @@ def main():
     metadata_df = spark.read.parquet(metadata_s3_path)
 
     pairwise_metadata_df = SimilarityCalculator() \
-                            .generate_pairwise_comparison_df_w_filter(metadata_df, 'titanic')
+                            .generate_pairwise_comparison_df_w_filter(metadata_df, 'hashcode-drone-delivery')
     Print.info('Generate pairwise comparison dataframe')
 
     similarity_score_df = parallel_processor.attach_similarity_score_to_df(pairwise_metadata_df)

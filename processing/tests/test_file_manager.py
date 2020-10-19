@@ -1,5 +1,5 @@
 import unittest
-from ..modules.file_manager import S3FileManager
+from modules.file_manager import S3FileManager
 
 class S3FileManagerTest(unittest.TestCase):
     def test_file_manager(self):

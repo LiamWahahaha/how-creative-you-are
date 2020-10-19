@@ -4,7 +4,7 @@ import json
 
 import boto3
 
-from processing.modules.utils import (
+from modules.utils import (
     is_notebook_code_cell,
     extract_source_code_from_notebook,
     extract_imported_package_from_next_line,
@@ -12,7 +12,7 @@ from processing.modules.utils import (
     Print
 )
 
-from processing.modules.constant import (
+from modules.constant import (
     S3_RESPONSE_METADATA,
     S3_RESPONSE_METADATA_HTTP_STATUS,
     S3_RESPONSE_CONTENTS,

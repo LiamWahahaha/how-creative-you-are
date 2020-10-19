@@ -2,7 +2,7 @@ import boto3
 import pycode_similar
 from pyspark.sql.functions import col
 
-from constant import (
+from modules.constant import (
     DEFAULT_BUCKET,
     ROOT_FOLDER
 )
