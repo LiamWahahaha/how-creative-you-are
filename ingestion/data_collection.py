@@ -3,10 +3,6 @@ import os
 import time
 from subprocess import Popen, PIPE
 
-import kaggle
-# import multiprocessing
-# import concurrent.futures
-
 class KaggleScraper:
     def save_competition_meta_and_download_related_kernels(self, competition_ref, path='tmp/'):
         metadata = self.save_csv(competition_ref, path)
@@ -14,12 +10,12 @@ class KaggleScraper:
         self.batch_download_kernel(kernel_refs, path)
 
     def batch_download_kernel(self, kernel_refs, path='tmp/'):
-        t1 = time.perf_counter()
-        for idx, kernel_ref in enumerate(kernel_refs):
+        time1 = time.perf_counter()
+        for kernel_ref in kernel_refs:
             self.download_kernel(kernel_ref, path)
             time.sleep(5)
-        t2 = time.perf_counter()
-        print(f'Finished in { t2 - t1 } seconds')
+        time2 = time.perf_counter()
+        print(f'Finished in { time2 - time1 } seconds')
 
     def download_kernel(self, kernel_ref, path='tmp/'):
         process = Popen(f'kaggle kernels pull {kernel_ref} -p {path}',
@@ -86,11 +82,15 @@ class KaggleScraper:
 
             for row in reader:
                 new_row = row[:]
-                new_row.extend([competition, row[0].split('/')[1] if len(row[0].split('/')) == 2 else ''])
+                kernel = row[0].split('/')[1] if len(row[0].split('/')) == 2 else ''
+                new_row.extend([competition, kernel])
                 metadata.append(new_row)
 
         with open(f'{path}{competition}.csv', mode='w') as csv_file:
-            csv_writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            csv_writer = csv.writer(csv_file,
+                                    delimiter=',',
+                                    quotechar='"',
+                                    quoting=csv.QUOTE_MINIMAL)
             for row in metadata:
                 csv_writer.writerow(row)
 
