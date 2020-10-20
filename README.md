@@ -1,7 +1,4 @@
 # Kernel Catcher
- 
-<hr/>
-
 **Kernel Catcher** is a project I built when I was a Data Engineering Fellow at Insight Data Science. It is a dashboard to allow admins of Kaggle competitions to catch plagiarized challenge submissions.
 
 ## Table of contents
