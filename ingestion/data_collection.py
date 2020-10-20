@@ -1,15 +1,21 @@
+import argparse
 import csv
 import os
-import time
+import sys
 from subprocess import Popen, PIPE
+import time
 
 class KaggleScraper:
-    def save_competition_meta_and_download_related_kernels(self, competition_ref, path='tmp/'):
+    def save_competition_meta_and_download_related_kernels(self, competition_ref, path):
+        if not path:
+            path = 'tmp/'
         metadata = self.save_csv(competition_ref, path)
         kernel_refs = [record[0] for record in metadata]
         self.batch_download_kernel(kernel_refs, path)
 
-    def batch_download_kernel(self, kernel_refs, path='tmp/'):
+    def batch_download_kernel(self, kernel_refs, path):
+        if not path:
+            path = 'tmp/'
         time1 = time.perf_counter()
         for kernel_ref in kernel_refs:
             self.download_kernel(kernel_ref, path)
@@ -17,7 +23,9 @@ class KaggleScraper:
         time2 = time.perf_counter()
         print(f'Finished in { time2 - time1 } seconds')
 
-    def download_kernel(self, kernel_ref, path='tmp/'):
+    def download_kernel(self, kernel_ref, path):
+        if not path:
+            path = 'tmp/'
         process = Popen(f'kaggle kernels pull {kernel_ref} -p {path}',
                         shell=True,
                         stderr=PIPE,
@@ -70,7 +78,9 @@ class KaggleScraper:
 
         return output
 
-    def save_csv(self, competition, path='tmp/'):
+    def save_csv(self, competition, path):
+        if not path:
+            path = 'tmp/'
         csv_text_list = self.retrieve_all_kernels_of_a_competition(competition)
         metadata = list()
         for content in csv_text_list:
@@ -95,3 +105,31 @@ class KaggleScraper:
                 csv_writer.writerow(row)
 
         return metadata
+
+    def print_search(self, text):
+        results = self.retrieve_all_kaggle_competitions_by_search(text)
+        for result in results:
+            records = result.split('\n')
+            for record in records[1:]:
+                if record:
+                    print(f"Competition Id: {record.split(',')[0]}")
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--save',
+                        help='will save the metadata to a csv file and download all the kernels' \
+                             + '\n and will save to ./tmp if not specified a path')
+    parser.add_argument('--search',
+                        help='return a list of possible competition Ids')
+    parser.add_argument('--path', help='download path')
+    args = parser.parse_args()
+
+    if len(sys.argv) == 1:
+        parser.print_help()
+
+    if args.search:
+        KaggleScraper().print_search(args.search)
+
+    if args.save:
+        KaggleScraper().save_competition_meta_and_download_related_kernels(args.save, args.path)
