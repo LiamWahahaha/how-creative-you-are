@@ -15,7 +15,7 @@ Kaggle is the world's largest data science community. It contains a lot of data 
 ## Architecture
 * **AWS S3**: All the kernel files and related competition metadata were hosted on S3.
 * **Spark(PySpark)**: Apache Spark was used for 2 purposes:
-  * Preprocessing: 
+  * Preprocessing
   * Similarity score calculation: Compute similarity score for different Kernels using pycode_similar
 * **PostgreSQL**:
 
